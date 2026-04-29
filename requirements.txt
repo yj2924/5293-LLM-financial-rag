@@ -1,0 +1,6 @@
+sec-edgar-downloader
+sentence-transformers
+faiss-cpu
+datasets
+pandas
+numpy

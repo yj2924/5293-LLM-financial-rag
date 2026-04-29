@@ -1,0 +1,44 @@
+[
+  {
+    "id": "AAPL_chunk_0",
+    "text": "Net sales increased 2 percent year over year. Services revenue reached an all time high. Gross margin was 44 point 1 percent. Net income totaled 97 billion dollars. The company repurchased 77 billion dollars of its own shares.",
+    "ticker": "AAPL",
+    "company": "AAPL",
+    "source_doc": "AAPL"
+  },
+  {
+    "id": "MSFT_chunk_0",
+    "text": "Azure revenue grew 30 percent. Intelligent Cloud segment increased 17 percent. Office 365 commercial revenue grew 14 percent. LinkedIn revenue increased 8 percent. Gaming revenue declined 5 percent due to lower console sales.",
+    "ticker": "MSFT",
+    "company": "MSFT",
+    "source_doc": "MSFT"
+  },
+  {
+    "id": "AMZN_chunk_0",
+    "text": "Net sales increased 13 percent to 574 point 8 billion dollars. AWS revenue grew 17 percent to 90 point 8 billion. Operating income increased from 12 point 2 billion to 36 point 9 billion",
+    "ticker": "AMZN",
+    "company": "AMZN",
+    "source_doc": "AMZN"
+  },
+  {
+    "id": "GOOGL_chunk_0",
+    "text": "Google Search revenue grew 5 percent. YouTube ads revenue increased 8 percent. Google Cloud revenue grew 26 percent. Total revenue was 307 billion dollars, up 9 percent year over year.",
+    "ticker": "GOOGL",
+    "company": "GOOGL",
+    "source_doc": "GOOGL"
+  },
+  {
+    "id": "META_chunk_0",
+    "text": "Family daily active people reached 3 point 14 billion. Ad impressions increased 28 percent. Revenue was 134 point 9 billion dollars, up 16 percent. Net income was 39 point 1 billion.",
+    "ticker": "META",
+    "company": "META",
+    "source_doc": "META"
+  },
+  {
+    "id": "NVDA_chunk_0",
+    "text": "Data Center revenue surged 217 percent to 47 point 5 billion dollars. Total revenue reached 60 point 9 billion, up 126 percent. GAAP earnings per diluted share was 11 point 93 dollars.",
+    "ticker": "NVDA",
+    "company": "NVDA",
+    "source_doc": "NVDA"
+  }
+]
