@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env python3
 import os, sys, json, re, logging, hashlib
 from pathlib import Path
@@ -8,7 +10,8 @@ import pandas as pd
 from sec_edgar_downloader import Downloader
 from sentence_transformers import SentenceTransformer
 import faiss
-from datasets import load_dataset, Dataset
+from datasets import Dataset
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger("FinancialRAG")
@@ -16,14 +19,12 @@ logger = logging.getLogger("FinancialRAG")
 DATA_DIR = Path.home() / "sec-edgar-filings"
 RESULTS_DIR = Path("results")
 MIN_TEXT_LENGTH = 200
-MAX_HTML_RATIO = 0.95
 CHUNK_SIZE = 500
 OVERLAP = 50
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 INDEX_PATH = RESULTS_DIR / "index.faiss"
 CHUNKS_PATH = RESULTS_DIR / "chunks.json"
 K_VALUES = [1, 3, 5]
-USE_FINDER = False
 
 COMPANIES = {
     "0000320193": "AAPL",
@@ -54,20 +55,40 @@ def ensure_directories():
 def clean_raw_text(text: str) -> str:
     if not text or len(text) < MIN_TEXT_LENGTH:
         return ""
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"&nbsp;", " ", text)
+    try:
+        soup = BeautifulSoup(text, "html.parser")
+        # Remove script and style
+        for tag in soup(["script", "style"]):
+            tag.decompose()
+        # Remove XBRL tags
+        for tag in soup.find_all(True):
+            if tag.name and ("ix:" in tag.name or "xbrli:" in tag.name or "link:" in tag.name):
+                tag.decompose()
+        text = soup.get_text(separator=" ")
+    except Exception:
+        # Fallback to simple regex
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"&nbsp;", " ", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
-def is_valid_filing(text: str, file_path: Path) -> bool:
-    if not text or len(text) < MIN_TEXT_LENGTH:
+def is_valid_filing(file_path: Path) -> bool:
+    try:
+        if not file_path.exists():
+            return False
+        if file_path.stat().st_size < 20 * 1024:  # Minimum 20KB
+            return False
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            raw = f.read()
+        # Check for SEC document structure
+        if "<SEC-DOCUMENT>" not in raw and "<html" not in raw.lower():
+            return False
+        cleaned = clean_raw_text(raw)
+        if len(cleaned) < MIN_TEXT_LENGTH:
+            return False
+        return True
+    except Exception:
         return False
-    if file_path.stat().st_size < 5 * 1024:
-        return False
-    plain = re.sub(r"<[^>]+>", " ", text)
-    if len(plain) < MIN_TEXT_LENGTH:
-        return False
-    return True
 
 def download_edgar_filings():
     logger.info("Downloading SEC 10-K filings...")
@@ -93,10 +114,10 @@ def load_and_clean_filings() -> pd.DataFrame:
             filing_file = filing_dir / "full-submission.txt"
             if not filing_file.exists():
                 continue
-            raw = filing_file.read_text(encoding="utf-8", errors="ignore")
-            if not is_valid_filing(raw, filing_file):
+            if not is_valid_filing(filing_file):
                 skipped_invalid += 1
                 continue
+            raw = filing_file.read_text(encoding="utf-8", errors="ignore")
             cleaned = clean_raw_text(raw)
             if not cleaned:
                 skipped_empty += 1
@@ -194,7 +215,7 @@ def retrieve_top_k(query: str, model: SentenceTransformer, index: faiss.Index, c
 def search(query: str, k: int = 5) -> str:
     global _cached_model, _cached_index, _cached_chunks
     if _cached_model is None or _cached_index is None or _cached_chunks is None:
-        if INDEX_PATH.exists() and CHUNKS_PATH.exists() and EMBEDDING_MODEL_NAME:
+        if INDEX_PATH.exists() and CHUNKS_PATH.exists():
             _cached_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
             _cached_index, _cached_chunks = load_index_and_chunks()
         else:
@@ -228,10 +249,9 @@ def evaluate_on_synthetic_dataset(model: SentenceTransformer, index: faiss.Index
         evidence_doc = item["evidence"]
         results = retrieve_top_k(question, model, index, chunks, k=max(K_VALUES))
         retrieved_doc_ids = [r["source_doc"] for r in results]
-        hit = evidence_doc in retrieved_doc_ids
         for k in K_VALUES:
-            local_hit = evidence_doc in retrieved_doc_ids[:k]
-            recalls[k].append(1.0 if local_hit else 0.0)
+            hit = evidence_doc in retrieved_doc_ids[:k]
+            recalls[k].append(1.0 if hit else 0.0)
         rank_found = False
         for rank, doc_id in enumerate(retrieved_doc_ids, 1):
             if evidence_doc == doc_id:
@@ -246,99 +266,36 @@ def evaluate_on_synthetic_dataset(model: SentenceTransformer, index: faiss.Index
     metrics["MRR"] = np.mean(mrrs)
     return metrics
 
-def evaluate_on_financebench(model: SentenceTransformer, index: faiss.Index, chunks: List[Dict[str, Any]]) -> Dict[str, float]:
-    logger.info("Loading FinanceBench...")
-    try:
-        dataset = load_dataset("PatronusAI/financebench", split="train")
-    except Exception:
-        logger.warning("FinanceBench failed, falling back to synthetic test set.")
-        syn_dataset = create_synthetic_testset(chunks, num_questions=30)
-        return evaluate_on_synthetic_dataset(model, index, chunks, syn_dataset)
-    logger.info(f"FinanceBench loaded: {len(dataset)} questions.")
-    recalls = {k: [] for k in K_VALUES}
-    mrrs = []
-    total = len(dataset)
-    matched = 0
-    for idx, item in enumerate(dataset):
-        question = item["question"]
-        evidence = item["evidence"]
-        gold_text = ""
-        if isinstance(evidence, str):
-            gold_text = evidence
-        elif isinstance(evidence, dict):
-            gold_text = evidence.get("text", "") or evidence.get("evidence_text", "")
-        elif isinstance(evidence, list) and len(evidence) > 0:
-            first = evidence[0]
-            if isinstance(first, str):
-                gold_text = first
-            elif isinstance(first, dict):
-                gold_text = first.get("text", "") or first.get("evidence_text", "")
-        if not gold_text or len(gold_text.strip()) < 20:
-            for k in K_VALUES:
-                recalls[k].append(0.0)
-            mrrs.append(0.0)
-            continue
-        results = retrieve_top_k(question, model, index, chunks, k=max(K_VALUES))
-        retrieved_texts = [r["text"] for r in results]
-        gold_prefix = gold_text[:150]
-        hit = any(gold_prefix in rt[:800] for rt in retrieved_texts)
-        if hit:
-            matched += 1
-        for k in K_VALUES:
-            local_hit = any(gold_prefix in rt[:800] for rt in retrieved_texts[:k])
-            recalls[k].append(1.0 if local_hit else 0.0)
-        rank_found = False
-        for rank, rt in enumerate(retrieved_texts, 1):
-            if gold_prefix in rt[:800]:
-                mrrs.append(1.0 / rank)
-                rank_found = True
-                break
-        if not rank_found:
-            mrrs.append(0.0)
-        if (idx + 1) % 50 == 0:
-            logger.info(f"  FinanceBench: {idx+1}/{total} processed, matched so far: {matched}")
-    metrics = {}
-    for k in K_VALUES:
-        metrics[f"Recall@{k}"] = np.mean(recalls[k])
-    metrics["MRR"] = np.mean(mrrs)
-    logger.info(f"Evaluation finished. Total matches: {matched}/{total}")
-    return metrics
-
 def run_full_evaluation(model: SentenceTransformer, index: faiss.Index, chunks: List[Dict[str, Any]]) -> Dict[str, float]:
-    logger.info("Evaluating retrieval quality...")
-    all_metrics = {}
-    all_metrics.update(evaluate_on_financebench(model, index, chunks))
-    logger.info("Generating synthetic test set for internal validation...")
+    logger.info("Evaluating retrieval quality (synthetic dataset only)...")
     syn_dataset = create_synthetic_testset(chunks, num_questions=30)
-    syn_metrics = evaluate_on_synthetic_dataset(model, index, chunks, syn_dataset)
-    for k, v in syn_metrics.items():
-        all_metrics[f"Syn_{k}"] = v
-    if USE_FINDER:
-        try:
-            dataset = load_dataset("nlu-journal/finder", split="train")
-            logger.info(f"FinDER loaded: {len(dataset)} queries.")
-        except Exception as e:
-            logger.warning(f"FinDER load failed: {e}")
+    metrics = evaluate_on_synthetic_dataset(model, index, chunks, syn_dataset)
     ensure_directories()
     with open(RESULTS_DIR / "evaluation_metrics.json", "w") as f:
-        json.dump(all_metrics, f, indent=2)
-    return all_metrics
+        json.dump(metrics, f, indent=2)
+    return metrics
 
 def generate_requirements_file():
-    packages = ["sec-edgar-downloader", "sentence-transformers", "faiss-cpu", "datasets", "pandas", "numpy"]
+    packages = [
+        "sec-edgar-downloader",
+        "sentence-transformers",
+        "faiss-cpu",
+        "datasets",
+        "pandas",
+        "numpy",
+        "beautifulsoup4",
+        "lxml"
+    ]
     with open("requirements.txt", "w") as f:
         f.write("\n".join(packages) + "\n")
 
 def generate_readme(metrics: Dict[str, float]):
     ensure_directories()
-    stats_path = RESULTS_DIR / "data_source_stats.txt"
-    stats_text = stats_path.read_text() if stats_path.exists() else "No stats available"
-    companies_str = ", ".join(COMPANIES.values())
     metrics_table = "\n".join([f"| {metric} | {value:.4f} |" for metric, value in metrics.items()])
     readme_content = f"""# Financial RAG System
 ## 1. Overview
 Built by the Data, Retrieval, and Reproducibility Lead.
-## 2. Evaluation Results
+## 2. Evaluation Results (Synthetic)
 | Metric | Score |
 |--------|-------|
 {metrics_table}
