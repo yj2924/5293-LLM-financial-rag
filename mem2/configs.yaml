@@ -1,0 +1,28 @@
+# mem2 configuration. Edit values here; no code changes required.
+# Loaded by mem2.factory.build_pipelines().
+
+llm:
+  backend: echo                             # echo | qwen_local | openai_compat
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  cache_dir: results/llm_cache              # disk cache for repeated prompts
+
+retriever:
+  # All three paths must match what mem1's main.py wrote.
+  index_path: results/index.faiss
+  chunks_path: results/chunks.json
+  embedding_model_name: all-MiniLM-L6-v2
+
+reranker:
+  candidates:                               # one pipeline created per entry
+    - lexical                               # offline smoke-test reranker
+    # - bge                                 # BAAI/bge-reranker-base
+    # - ms-marco                            # cross-encoder/ms-marco-MiniLM-L-6-v2
+
+pipeline:
+  retrieve_k: 5                             # standard RAG: dense top-k
+  rerank_retrieve_k: 20                     # reranked RAG: dense top-N before rerank
+  rerank_top_k: 5                           # reranked RAG: top-k after rerank
+  context_budget_tokens: 3000               # hard cap on context tokens fed to LLM
+  max_per_source: 2                         # per-source dedup before truncation
+  max_new_tokens: 512                       # LLM generation cap
+  temperature: 0.0                          # deterministic by default

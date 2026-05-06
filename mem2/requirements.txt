@@ -1,0 +1,8 @@
+## mem2 additional dependencies (mem1's requirements.txt covers retrieval).
+# LLM backend (local Qwen 2.5 7B Instruct)
+transformers>=4.40
+torch>=2.1
+accelerate>=0.30
+# Reranker backends (CrossEncoder is part of sentence-transformers, already in mem1)
+# Config
+pyyaml>=6.0

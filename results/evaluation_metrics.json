@@ -1,10 +1,28 @@
 {
-  "Recall@1": 0.0,
-  "Recall@3": 0.0,
-  "Recall@5": 0.0,
-  "MRR": 0.0,
-  "Syn_Recall@1": 1.0,
-  "Syn_Recall@3": 1.0,
-  "Syn_Recall@5": 1.0,
-  "Syn_MRR": 1.0
+  "baseline_llm_no_retrieval": {
+    "answer_token_f1": 0.04047587443239237,
+    "faithfulness": 0.0,
+    "hallucination_proxy_rate": 1.0,
+    "citation_rate": 0.0
+  },
+  "standard_rag": {
+    "answer_token_f1": 0.05818576922325389,
+    "faithfulness": 0.7778653178732968,
+    "hallucination_proxy_rate": 0.22213468212670306,
+    "citation_rate": 1.0,
+    "retrieval_recall_at_1": 0.03,
+    "retrieval_recall_at_3": 0.06,
+    "retrieval_recall_at_5": 0.09,
+    "retrieval_mrr": 0.04699999999999999
+  },
+  "reranked_rag": {
+    "answer_token_f1": 0.06545753853359658,
+    "faithfulness": 0.7677298494826179,
+    "hallucination_proxy_rate": 0.23227015051738195,
+    "citation_rate": 1.0,
+    "retrieval_recall_at_1": 0.1,
+    "retrieval_recall_at_3": 0.17,
+    "retrieval_recall_at_5": 0.17,
+    "retrieval_mrr": 0.12833333333333333
+  }
 }

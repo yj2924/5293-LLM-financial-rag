@@ -1,0 +1,8 @@
+{
+  "corpus": "sample",
+  "benchmark": "sample",
+  "limit": "all",
+  "examples": 5,
+  "embedding_backend": "hashing",
+  "reranker_backend": "lexical"
+}

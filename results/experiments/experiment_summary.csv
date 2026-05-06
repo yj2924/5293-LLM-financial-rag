@@ -1,0 +1,13 @@
+experiment,benchmark,limit,reranker,method,answer_token_f1,faithfulness,hallucination_proxy_rate,citation_rate,recall_at_1,recall_at_3,recall_at_5,mrr
+financebench_150_lexical,FinanceBench,150,lexical,baseline_llm_no_retrieval,0.0107,0.0000,1.0000,0.0000,,,,
+financebench_150_lexical,FinanceBench,150,lexical,standard_rag,0.0384,0.7688,0.2312,1.0000,0.0467,0.0667,0.0733,0.0572
+financebench_150_lexical,FinanceBench,150,lexical,reranked_rag,0.0357,0.7907,0.2093,1.0000,0.0467,0.0600,0.0667,0.0550
+finder_500_lexical,FinDER,500,lexical,baseline_llm_no_retrieval,0.0388,0.0000,1.0000,0.0000,,,,
+finder_500_lexical,FinDER,500,lexical,standard_rag,0.0541,0.7730,0.2270,1.0000,0.0340,0.0640,0.0880,0.0511
+finder_500_lexical,FinDER,500,lexical,reranked_rag,0.0552,0.7779,0.2221,1.0000,0.0340,0.0520,0.0800,0.0475
+financebench_50_cross_encoder,FinanceBench,50,ms-marco-cross-encoder,baseline_llm_no_retrieval,0.0076,0.0000,1.0000,0.0000,,,,
+financebench_50_cross_encoder,FinanceBench,50,ms-marco-cross-encoder,standard_rag,0.0323,0.7514,0.2486,1.0000,0.0200,0.0200,0.0200,0.0200
+financebench_50_cross_encoder,FinanceBench,50,ms-marco-cross-encoder,reranked_rag,0.0327,0.7876,0.2124,1.0000,0.0200,0.0400,0.0400,0.0300
+finder_100_cross_encoder,FinDER,100,ms-marco-cross-encoder,baseline_llm_no_retrieval,0.0405,0.0000,1.0000,0.0000,,,,
+finder_100_cross_encoder,FinDER,100,ms-marco-cross-encoder,standard_rag,0.0582,0.7779,0.2221,1.0000,0.0300,0.0600,0.0900,0.0470
+finder_100_cross_encoder,FinDER,100,ms-marco-cross-encoder,reranked_rag,0.0655,0.7677,0.2323,1.0000,0.1000,0.1700,0.1700,0.1283

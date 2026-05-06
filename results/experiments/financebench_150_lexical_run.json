@@ -1,0 +1,8 @@
+{
+  "corpus": "benchmark",
+  "benchmark": "financebench",
+  "limit": 150,
+  "examples": 150,
+  "embedding_backend": "hashing",
+  "reranker_backend": "lexical"
+}

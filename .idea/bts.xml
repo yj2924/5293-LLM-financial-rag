@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="bts">
+    <option name="configFilePath" value="$PROJECT_DIR$/.docker/odoo.conf" />
+    <option name="dbList">
+      <list>
+        <option value="Error: /bin/bash: bt: command not found" />
+      </list>
+    </option>
+    <option name="moduleList" value="&lt;ArrayList/&gt;" />
+    <option name="modulePathList" value="&lt;ArrayList/&gt;" />
+  </component>
+</project>

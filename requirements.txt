@@ -1,6 +1,11 @@
+numpy
+pandas
+datasets
 sec-edgar-downloader
 sentence-transformers
 faiss-cpu
-datasets
-pandas
-numpy
+streamlit
+pyyaml
+transformers
+torch
+accelerate

@@ -1,0 +1,8 @@
+{
+  "corpus": "benchmark",
+  "benchmark": "finder",
+  "limit": 100,
+  "examples": 100,
+  "embedding_backend": "hashing",
+  "reranker_backend": "cross-encoder"
+}

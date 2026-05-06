@@ -1,0 +1,4 @@
+method,answer_token_f1,citation_rate,faithfulness,hallucination_proxy_rate,retrieval_mrr,retrieval_recall_at_1,retrieval_recall_at_3,retrieval_recall_at_5
+baseline_llm_no_retrieval,0.00758854975035906,0.0,0.0,1.0,0.0,0.0,0.0,0.0
+standard_rag,0.03228322047550915,1.0,0.7513716749591026,0.24862832504089738,0.02,0.02,0.02,0.02
+reranked_rag,0.03271394337839228,1.0,0.7876120006604589,0.21238799933954122,0.03,0.02,0.04,0.04

@@ -1,0 +1,8 @@
+{
+  "corpus": "benchmark",
+  "benchmark": "financebench",
+  "limit": 50,
+  "examples": 50,
+  "embedding_backend": "hashing",
+  "reranker_backend": "cross-encoder"
+}
